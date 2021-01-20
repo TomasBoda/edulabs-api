@@ -229,21 +229,7 @@ function getTeacherClassroomsBySubject(userId, subjectId) {
   });
 }
 
-function updateStudentData(userId, firstname, lastname, email, admin, classroom) {
-  return new Promise((resolve, reject) => {
-    const query = "UPDATE users SET firstname = ?, lastname = ?, email = ?, admin = ?, classroom = ? WHERE id = ?";
-
-    conn.query(query, [ firstname, lastname, email, admin, classroom, userId ], (error, result) => {
-      if (error) return reject(error);
-
-      const message = "User data updated successfully";
-
-      return resolve(message);
-    });
-  });
-}
-
-function updateTeacherData(userId, firstname, lastname, email, admin) {
+function updateUserData(userId, firstname, lastname, email, admin) {
   return new Promise((resolve, reject) => {
     const query = "UPDATE users SET firstname = ?, lastname = ?, email = ?, admin = ? WHERE id = ?";
 
@@ -511,12 +497,6 @@ function getGradesByUserAndSubject(userId, subjectId) {
   });
 }
 
-/////////////
-
-// QUERIES
-
-// GLOBAL
-
 function getSubject(subjectId) {
   return new Promise((resolve, reject) => {
     const query = "SELECT * FROM subjects WHERE id = ?";
@@ -544,10 +524,6 @@ function getClassroom(classroomId) {
     });
   });
 }
-
-// ADMIN
-
-// STUDENTS
 
 function removeStudentSubjects(userId) {
   return new Promise((resolve, reject) => {
@@ -589,6 +565,49 @@ function addSubjectsToStudent(userId, classroomId, subjects) {
   });
 }
 
+// DELETE FUNCTIONS
+
+function deleteUser(userId) {
+  return new Promise((resolve, reject) => {
+    const query = "DELETE FROM users WHERE id = ?";
+
+    conn.query(query, [ userId ], (error, result) => {
+      if (error) return reject(error);
+
+      const message = "User deleted successfully";
+
+      return resolve(message);
+    });
+  });
+}
+
+function deleteUserSubjectsAndClassrooms(userId) {
+  return new Promise((resolve, reject) => {
+    const query = "DELETE FROM user_subjects WHERE user_id = ?";
+
+    conn.query(query, [ userId ], (error, result) => {
+      if (error) return reject(error);
+
+      const message = "User data deleted successfully";
+
+      return resolve(message);
+    });
+  });
+}
+
+function deleteUserGrades(userId) {
+  return new Promise((resolve, reject) => {
+    const query = "DELETE FROM grades WHERE user_id = ?";
+
+    conn.query(query, [ userId ], (error, result) => {
+      if (error) return reject(error);
+
+      const message = "User grades deleted successfully";
+
+      return resolve(message);
+    });
+  });
+}
 
 
 // AUTHENTIFICATION API CALLS
@@ -777,6 +796,38 @@ app.post("/api/grades", isTeacher, async (request, response) => {
 
 
 // ADMIN API CALLS
+
+app.post("/api/admin/users/update/:id", isAdmin, async (request, response) => {
+  const userId = request.params.id;
+
+  const firstname = request.body.firstname;
+  const lastname = request.body.lastname;
+  const email = request.body.email;
+  const admin = request.body.admin;
+
+  await updateUserData(userId, firstname, lastname, email, admin);
+
+  const data = {
+    message: "User data updated successfully"
+  }
+
+  return response.send(data);
+});
+
+// delete user and their data by id
+app.post("/api/admin/users/delete/:id", isAdmin, async (request, response) => {
+  const userId = request.params.id;
+
+  await deleteUser(userId);
+  await deleteUserSubjectsAndClassrooms(userId);
+  await deleteUserGrades(userId);
+
+  const data = {
+    message: "User deleted successfully"
+  }
+
+  return response.send(data);
+});
 
 // get user by id
 app.get("/api/admin/users/:id", isAdmin, async (request, response) => {
@@ -1025,5 +1076,4 @@ app.set("port", process.env.PORT || 3000);
 
 app.listen(app.get("port"), () => {
   console.log("Node.js REST API started on port " + app.get("port") + "...");
-  //console.log(uuid.v4().toString());
 });
