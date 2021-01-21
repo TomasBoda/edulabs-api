@@ -609,6 +609,20 @@ function deleteUserGrades(userId) {
   });
 }
 
+function getUserGrades(userId) {
+  return new Promise((resolve, reject) => {
+    const query = "SELECT * FROM grades WHERE user_id = ?";
+
+    conn.query(query, [ userId ], (error, result) => {
+      if (error) return reject(error);
+
+      const grades = result;
+
+      return resolve(grades);
+    });
+  });
+}
+
 
 // AUTHENTIFICATION API CALLS
 
@@ -684,6 +698,19 @@ app.get("/api/grades/:id", verifyToken, async (request, response) => {
   const subjectId = request.params.id;
 
   const grades = await getGradesByUserAndSubject(userId, subjectId);
+
+  const data = {
+    message: "Grades retrieved successfully",
+    grades: grades
+  }
+
+  return response.send(data);
+});
+
+app.get("/api/grades", verifyToken, async (request, response) => {
+  const userId = request.userId;
+
+  const grades = await getUserGrades(userId);
 
   const data = {
     message: "Grades retrieved successfully",
@@ -797,6 +824,7 @@ app.post("/api/grades", isTeacher, async (request, response) => {
 
 // ADMIN API CALLS
 
+// update user by id
 app.post("/api/admin/users/update/:id", isAdmin, async (request, response) => {
   const userId = request.params.id;
 
@@ -834,12 +862,16 @@ app.get("/api/admin/users/:id", isAdmin, async (request, response) => {
   const userId = request.params.id;
   const user = await getUser(userId);
 
-  const data = {
-    message: "User retrieved successfully",
-    user: user
+  if (user) {
+    return response.send({
+      message: "User retrieved successfully",
+      user: user
+    });
   }
 
-  return response.send(data);
+  return response.send({
+    message: "Cannot find user with the provided id"
+  });
 });
 
 // get students of classroom
