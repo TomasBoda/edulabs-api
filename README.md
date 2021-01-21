@@ -1,4 +1,4 @@
-# EduLabs back-end
+# EduLabs RESTful API
 by Tomáš Boďa
 
 
