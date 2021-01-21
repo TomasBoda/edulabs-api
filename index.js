@@ -707,7 +707,7 @@ app.get("/api/grades/:id", verifyToken, async (request, response) => {
   return response.send(data);
 });
 
-app.get("/api/grades", verifyToken, async (request, response) => {
+app.get("/api/user/grades", verifyToken, async (request, response) => {
   const userId = request.userId;
 
   const grades = await getUserGrades(userId);
